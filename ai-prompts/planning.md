@@ -64,3 +64,59 @@ in requirements-analysis.md Assumptions and flagged it for
 test-strategy.md's "Tests Not Covered" section. This was a deliberate
 push-back on the AI's implied fix, not an oversight — I'm choosing to
 document the trade-off rather than over-engineer Core.
+
+## Prompt 2 — Targeted verification pass (Plan Mode)
+
+**Prompt:**
+"I've revised this based on your last review. Don't re-review the whole
+document. Just verify: (1) does the state machine section now correctly
+rule out same-status saves as invalid and constrain create-time status to
+Open, (2) is the terminal-state edit rule unambiguous enough to implement
+directly without guessing, (3) is there anything in Assumptions that
+contradicts something else in the document."
+
+**AI Response Summary:**
+Confirmed (1) and (2) checked out cleanly — create-time status constraint
+and same-status-save handling were both correctly specified, and the
+terminal-state edit rule was implementable as written, with one naming
+caveat: "terminal" was being used for two different rule sets (edit-lock
+vs. transition-final states) that overlap on 2 of 3 values but aren't
+identical, risking a single `isTerminal()` implementation bug. For (3), it
+found a real contradiction: Functional Requirements allowed comments on
+Closed/Cancelled tickets, but Clarifications and Edge Cases still listed
+this as an undecided open question — direct conflict, not just missing
+detail. Also flagged minor drift: "My Understanding" still said "entity
+constraint or presave hook" while Assumptions had already mandated
+constraint-only.
+
+**Accepted:**
+- Added an explicit naming-caveat note distinguishing edit-locked vs.
+  transition-final terminal states, with an instruction not to implement
+  a single shared `isTerminal()` check for both
+- Resolved the comments contradiction: decided comments are allowed on
+  Closed/Cancelled tickets (kept the Functional Requirements answer as
+  the deliberate one), removed it from open Clarifications, and updated
+  the Edge Cases bullet to state the decision instead of leaving it open
+- Fixed "My Understanding" wording to say "entity constraint validator"
+  only, matching Assumptions, removing the presave-hook alternative
+
+**Changed:**
+- Made the edit to the Edge Cases section by hand and had to fix a
+  self-inflicted structural error (accidentally deleted the "## Edge
+  Cases" header while editing) — caught and corrected by re-viewing the
+  file before moving on, rather than assuming the edit landed cleanly
+
+**Rejected:**
+- None — this pass's findings were both valid and cheap to fix, no
+  pushback needed this round
+
+**Why:**
+Both catches were real: the comments contradiction was an actual
+inconsistency a reviewer or implementer would trip on, and the
+`isTerminal()` naming trap is a plausible real implementation bug (one
+shared boolean check silently blocking a valid Resolved→Closed transition
+because it also gates edits). Worth noting the second-pass prompt (narrow,
+"verify these specific things") produced a more actionable response than
+the first broad review — no filler, no restating the document, just a
+clear pass/fail per item plus one thing it wasn't asked about but caught
+anyway (My Understanding drift).
