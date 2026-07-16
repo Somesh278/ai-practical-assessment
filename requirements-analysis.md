@@ -24,8 +24,8 @@ to reflect that clearly, not to enforce it.
 In Drupal terms, this maps to a custom content entity (Ticket) with fields
 for title, description, priority, status, assignee, and audit fields, a
 Comment-module integration for ticket comments, Views for listing/searching,
-and a validation layer (entity constraint or presave hook) that owns the
-transition rules.
+and an entity constraint validator that owns the transition rules (see
+Assumptions for why constraint-only, not presave-hook-only).
 
 ## Functional Requirements
 
@@ -53,8 +53,10 @@ transition rules.
     description) is **not** a transition and must not be rejected as one
   - All transitions not in the list above are rejected, including from any
     terminal state (Resolved, Closed, Cancelled)
-- Add a comment to a ticket (including on Closed/Cancelled — see
-  Clarifications)
+- Add a comment to a ticket, **including on Closed/Cancelled tickets**
+  (decided: comments remain open even on terminal-status tickets, since
+  follow-up notes on closed work are common and comments are not a
+  "field edit" in the terminal-state read-only sense — see Assumptions)
 - Keyword search scoped to ticket **title and description only** (not
   comments, not assignee name) — core Views CONTAINS-style matching, not
   ranked full-text search
@@ -94,6 +96,13 @@ transition rules.
   read-only. Chosen over "always editable" to keep the archive meaningful
   once a ticket is done — documented here as a product decision, not
   discovered as a bug later
+  - **Naming caveat:** "terminal" is used in two different senses in this
+    doc — (a) *edit-locked* states (Resolved, Closed, Cancelled — no more
+    field edits) vs. (b) *transition-final* states (Closed, Cancelled only
+    — Resolved can still transition to Closed). Do **not** implement a
+    single `isTerminal()` check reused for both edit-locking and
+    transition-blocking; they are different rule sets that happen to
+    overlap on two of three values
 - **Transition enforcement mechanism:** an entity constraint validator
   (not a presave-hook-only approach), so the rule is enforced through
   Drupal's validation API regardless of entry point (form, REST, Drush) —
@@ -168,8 +177,9 @@ Remaining open questions:
 - Creating a ticket with a missing required field (title, description,
   priority)
 - Searching/filtering with no matching results — empty state, not an error
-- Adding a comment to a Closed or Cancelled ticket — decide and document
-  whether this is allowed
+- Adding a comment to a Closed or Cancelled ticket — **decided: allowed**
+  (see Functional Requirements); comment access is independent of the
+  field-edit lock on terminal-status tickets
 - Very long keyword search strings or special characters (`%`, `_`) in
   search input — Views' CONTAINS operator use may need explicit escaping
   depending on the query plugin
