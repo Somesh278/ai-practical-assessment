@@ -24,15 +24,18 @@ entity `update` access:
 | resolved | Yes (→ closed only) | No |
 | closed, cancelled | **No** (no further transitions) | No |
 
-Mechanism: entity `update` access alone can't express this (it's
-all-or-nothing per entity). Implemented as a `checkFieldAccess()`
-override on the access control handler — denies write access to the
-`status` field when current status is `closed`/`cancelled`, and denies
-write access to all non-`status` fields when current status is
-`resolved`/`closed`/`cancelled`. Backed by a save-time constraint that
-diffs `$entity->original` against the incoming values for the locked
-fields, so a direct API/Drush write can't bypass the form-level
-`checkFieldAccess()` the way a bare `#access` callback could.
+Mechanism: **fields stay visible but non-interactive when locked — they
+are not hidden from the form.** `checkFieldAccess()` does NOT deny edit
+access for locked fields (denying access is what causes Drupal to omit a
+widget from the form entirely, which is the wrong UX here). Instead,
+`TicketForm::buildForm()` sets `#disabled = TRUE` on the widget for any
+field that's locked under the current status, so the user can see the
+field and its current value but can't interact with it. The actual
+enforcement is a save-time constraint that diffs `$entity->original`
+against incoming values for the locked fields and rejects any change —
+this is what closes the real gap (a disabled widget is a UX nicety, not
+security; a direct API/Drush write bypasses the form entirely, so the
+constraint is the only thing actually stopping a locked-field change).
 
 ## Comment (Drupal core Comment module)
 

@@ -10,10 +10,13 @@ Design below.
 ## Frontend Design
 
 - Entity add/edit forms via Drupal's Form API (auto-generated from field
-  definitions), with field-level edit access enforced via
-  `checkFieldAccess()` (see data-model.md's field-level edit lock table —
-  this is per-field, not a single form-wide `#access` toggle, since
-  `resolved` keeps `status` editable while locking everything else)
+  definitions). Locked fields are **visible but disabled** (`#disabled`
+  set in `TicketForm::buildForm()`), not hidden — a user should be able
+  to see what a resolved/closed/cancelled ticket says without needing a
+  separate read-only view. `checkFieldAccess()` is *not* used to deny
+  edit access for lock purposes (that would hide the widget entirely,
+  the wrong UX); it's reserved for actual permission checks (e.g. `uid`
+  always denied). See data-model.md's field-level edit lock table.
 - Status change control on the edit form limited to a `<select>` populated
   only with legal next-states for the ticket's current status (UX
   convenience only — backend still re-validates regardless of what's

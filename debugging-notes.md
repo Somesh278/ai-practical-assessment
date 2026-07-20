@@ -78,3 +78,36 @@ Use `drush route | grep ticket` (or `drush route --name=...` /
 `--path=...`) instead.
 
 <!-- Repeat ## Issue N for each real issue hit -->
+
+## Issue 3 — priority field not locked on resolved tickets
+
+### Problem
+Manually testing the edit-lock via the actual UI (not just the smoke
+tests Cursor ran): on a `resolved` ticket, title and description were
+correctly hidden from the edit form, but `priority` was still visible and
+editable. Per EDIT_LOCKED_STATUSES, priority should be locked alongside
+title/description/assignee on resolved/closed/cancelled. On `closed`, the
+edit form correctly showed "access denied" entirely (status is both
+edit-locked and transition-final, so no field is editable by anyone).
+
+### How I Investigated
+Manual UI testing by walking a ticket to resolved and closed and checking
+the actual rendered edit form, rather than relying only on Cursor's
+smoke-test report (title-change-on-resolved-rejected covered title, but
+not priority, and not the "is it rendered at all" question separate from
+"is a submitted change rejected").
+
+### How AI Helped
+Not yet — bug found by manual testing before asking Cursor to fix it.
+
+### What I Validated
+Confirmed closed-ticket "access denied" behavior is correct (matches
+design: status both edit-locked and transition-final = no update access
+for anyone). Confirmed the priority bug is isolated to checkFieldAccess()
+somehow treating priority differently from title/description, not a
+broader failure of the edit-lock mechanism.
+
+### Final Fix
+_Pending — flagged to Cursor, not yet fixed as of this log entry._
+
+<!-- Repeat ## Issue N for each real issue hit -->

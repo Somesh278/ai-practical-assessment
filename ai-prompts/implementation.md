@@ -43,3 +43,41 @@ TicketForm.php against data-model.md before accepting as-is._
 **Rejected:** _None yet._
 
 **Why:** _TBD after review._
+
+## Prompt 2 — Access handler + constraints (Agent Mode)
+
+**Prompt:**
+"@data-model.md @design-notes.md — Implement TicketAccessControlHandler
+and two entity constraints for Ticket, matching data-model.md exactly:
+(1) access handler with view/update/delete/create rules and
+checkFieldAccess() override for status vs other fields vs uid; (2)
+TicketStatusTransition constraint validating against
+Ticket::ALLOWED_TRANSITIONS with original/loadUnchanged() fallback; (3)
+edit-lock constraint diffing non-status fields against original when
+edit-locked. Don't touch TicketForm.php or routing yet."
+
+**AI Response Summary:**
+Implemented TicketAccessControlHandler (view: "view tickets"; update:
+edit-fields-and-not-locked OR assignee/admin-and-not-final; delete:
+always denied; create: "create tickets"; checkFieldAccess() split by
+field — status gated on assignee/admin + not closed/cancelled, other
+fields gated on edit-fields + not edit-locked, uid always denied),
+TicketStatusTransitionConstraint + validator (skips new entities, reads
+original with loadUnchanged() fallback, same-status always valid,
+validates against ALLOWED_TRANSITIONS, specific rejection message), and
+TicketEditLockConstraint + validator (diffs non-status fields against
+original when edit-locked, allows status-only changes). Registered both
+constraints and the access handler on the Ticket entity annotation.
+Verified via cache rebuild + smoke tests: invalid transition rejected,
+title edit on resolved rejected, resolved→closed allowed, delete denied.
+
+**Accepted:** _Pending — reviewing checkFieldAccess() timing behavior on
+initial form load (not just submission) before fully accepting; smoke
+tests cover rejection paths but not confirmed for form-render behavior on
+a locked ticket's first page load._
+
+**Changed:** _TBD._
+
+**Rejected:** _None yet._
+
+**Why:** _TBD after form-render check._
