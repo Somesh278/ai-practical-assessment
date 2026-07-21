@@ -108,7 +108,15 @@ somehow treating priority differently from title/description, not a
 broader failure of the edit-lock mechanism.
 
 ### Final Fix
-_Pending — flagged to Cursor, not yet fixed as of this log entry._
+Fixed as part of the "disabled, not hidden" edit-lock rework (see the
+design-notes.md/data-model.md update on visible-but-disabled fields) —
+priority was included in the locked-field list alongside title/
+description/assignee. Confirmed via the final code-review pass
+(code-review-notes.md) that priority is correctly present in
+`EDIT_LOCKED_FIELDS` and has a dedicated Kernel test
+(`testEditLockRejectsPriorityChangeWhileResolved`) pinning it down. This
+log entry was itself out of date (still said "Pending") until the final
+review caught the discrepancy and it was corrected here.
 
 <!-- Repeat ## Issue N for each real issue hit -->
 

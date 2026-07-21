@@ -2,10 +2,11 @@
 
 ## Summary
 
-- Total tests: 37 (36 original + 1 added for Issue 5 regression, see
-  debugging-notes.md)
-- Passing: 37, confirmed after Issue 6's fix as well (no regressions)
+- Total tests: 46 (37 after Issue 5 + 9 added during the final
+  code-review round — see code-review-notes.md Round 2)
+- Passing: 46
 - Failing: 0
+- PHPCS (Drupal, DrupalPractice standards): 0 errors, 0 warnings
 
 ```
 ./vendor/bin/phpunit -c phpunit.xml web/modules/custom/ticket_management/tests/src/Kernel/TicketEntityTest.php

@@ -67,16 +67,22 @@ added: `ticket_staff`.
 | `view tickets` | View any ticket, view comments | `ticket_staff` role |
 | `create tickets` | Create a new ticket (always starts `open`) | `ticket_staff` role |
 | `edit ticket fields` | Edit title/description/priority/assignee when not edit-locked | `ticket_staff` role (any staff, **not** assignee-only — see below) |
-| `transition ticket status` | Change status along a valid transition | granted per-ticket to the assignee only (not role-wide) |
 | `administer tickets` | Transition status on **any** ticket, including unassigned ones | admin role only |
 | (delete) | Not granted to any role — delete is out of scope for Core (see requirements-analysis.md); no delete route/permission implemented | nobody |
 
 **Two separate rules, not one bundled rule:**
 - *Editing non-status fields* is gated by `edit ticket fields` (role-wide,
   any staff) + the field-edit-lock table above — **not** restricted to
-  the assignee
+  the assignee. As of the final code-review pass, this access is also
+  denied outright once the ticket's status is transition-final
+  (`closed`/`cancelled`), even if the user holds `edit ticket fields` —
+  see the "Genuine access-control bug" fix in code-review-notes.md
 - *Changing status* is gated by being the ticket's assignee, or holding
-  `administer tickets`
+  `administer tickets` — enforced in `TicketAccessControlHandler` via
+  stored assignee ID (not a separate Drupal permission; an earlier
+  `transition ticket status` permission was defined but never actually
+  used, and was removed during the final code-review pass rather than
+  wired up, since the hardcoded assignee-ID check was already correct)
 
 **Unassigned tickets:** since status-transition access checks
 "current user is the assignee," a ticket with no assignee has no user who
@@ -85,6 +91,11 @@ someone with `administer tickets`. This is a direct consequence of the
 rule above, not a separate mechanism, and is worth surfacing in the UI
 (e.g. "assign this ticket to enable staff transitions") rather than
 leaving it as a silent dead end.
+
+**Assignee validity:** the assignee reference is validated as an
+existing, non-blocked (`status = 1`) user via a dedicated
+`TicketAssignee` constraint — not just existence-checking, which was a
+gap caught in the final code-review pass.
 
 ## Status Transition Table (authoritative)
 
@@ -115,4 +126,3 @@ Implementation implication: do not write a single `isTerminal($status)`
 helper reused for both the form `#access` callback and the transition
 validator — `resolved` needs `edit_locked = true` but
 `transition_final = false`.
-

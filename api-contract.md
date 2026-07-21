@@ -52,7 +52,8 @@ description/priority).
 | `status` | exact match against one status value, optional |
 
 ### Output
-Paginated list: title, status, priority, assignee, updated date. Access-
+Paginated list: title, status, priority, assignee, updated date, and an
+Edit link column (when the user has entity `update` access). Access-
 checked per row via `TicketAccessControlHandler` (Views uses entity
 access, not a raw query) — see design-notes.md. Empty state rendered
 when no rows match.
@@ -69,7 +70,8 @@ when no rows match.
 ### Output
 All ticket fields, current status, comment thread (Comment module
 default field formatter), and — conditionally rendered based on access —
-an Edit link, a status-transition control, and a comment form.
+an Edit link (local task) and a comment form. Status changes are made on
+the edit form (`entity.ticket.edit_form`), not inline on the detail view.
 
 ---
 
@@ -81,6 +83,12 @@ an Edit link, a status-transition control, and a comment form.
 **Permission required:** varies per field — see Field Visibility below.
 No separate route for status changes; one form handles both, with
 Drupal's `checkFieldAccess()` deciding what each user can see/edit.
+**As of the final code-review pass, `edit ticket fields` alone no longer
+grants access when the ticket's status is transition-final
+(`closed`/`cancelled`)** — on those statuses, the route denies access
+entirely unless the user can also transition status (which is never true
+for closed/cancelled), matching the original intent that closed tickets
+should not be editable by general staff at all.
 
 ### Form Input
 | Field | Required | Shown/editable when |
@@ -89,16 +97,22 @@ Drupal's `checkFieldAccess()` deciding what each user can see/edit.
 | description | Yes | same as title |
 | priority | Yes | same as title |
 | assignedTo | No | same as title |
-| status | — | user is the ticket's assignee OR holds `administer tickets`, AND ticket status is not `closed`/`cancelled` (see data-model.md). Rendered as a `<select>` populated only with legal next-states for the current status — UX convenience only |
+| status | — | user is the ticket's assignee OR holds `administer tickets`, AND ticket status is not `closed`/`cancelled` (see data-model.md). Rendered as a `<select>` filtered to the current status plus its legal next-states only (not all 5 values) — UX convenience; backend still re-validates regardless |
 
 A user who can edit fields but isn't the assignee/admin sees the form
-without a status control. A user who is only the assignee (not general
-staff) sees only the status control. Both together get the full form.
-This is one route, one form class — visibility is entirely access-driven,
-not two separate code paths.
+without a status control, **unless the ticket is resolved**, in which
+case they see the form with title/description/priority/assignee
+disabled and no status control (since they can't transition it either).
+A user who is only the assignee (not general staff) sees only the status
+control. Both together get the full form. This is one route, one form
+class — visibility is entirely access-driven, not two separate code
+paths.
 
 ### Validation (enforced server-side regardless of what the form renders)
 - Required-field checks (title, description, priority) — as before
+- Assignee, if set, must reference an existing **and non-blocked** user
+  (`TicketAssignee` constraint — added during the final code-review pass;
+  the original implementation only checked existence)
 - If `status` changed: checked by the `TicketStatusTransition` entity
   constraint against the authoritative table in data-model.md (open →
   in_progress → resolved → closed, plus the two cancel paths; same-status
@@ -108,12 +122,12 @@ not two separate code paths.
   submitted via direct API/Drush and not through this form
 
 ### On Success
-Ticket saved, confirmation message identifying what changed (e.g. "Ticket
-updated" or "Status changed to Closed"), redirect to
-`entity.ticket.canonical`.
+Ticket saved, confirmation message ("Ticket %label has been updated."),
+redirect to `entity.ticket.canonical`.
 
 ### On Failure
-- Field-level validation errors (missing required fields), or
+- Field-level validation errors (missing required fields, blocked
+  assignee), or
 - Specific rejection message naming the illegal from→to pair if an
   invalid status change was attempted (e.g. "Cannot move a ticket from
   Resolved to In Progress") — not a generic error
@@ -149,4 +163,3 @@ Comment saved, thread updated, redirect back to ticket detail.
 - Delete: no route, form, or permission exists for any role (see
   requirements-analysis.md — explicitly out of scope)
 - REST/JSON:API resources (Stretch candidate only)
-
