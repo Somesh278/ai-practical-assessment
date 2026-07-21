@@ -7,8 +7,10 @@
    assignee (optional) → submit → redirect to detail view. No status field
    here, always starts Open.
 3. **Ticket Detail** (`/ticket/{id}`) → all fields, current status,
-   comment thread, Edit link (if user has field-edit access), inline
-   comment form.
+   comment thread, Edit link (if user has entity **update** access — i.e.
+   `edit ticket fields` OR is the assignee/admin who can transition status;
+   **not** narrowed to field-edit permission alone, which would wrongly
+   hide it from assignee-only users), inline comment form.
 4. **Edit Ticket** (`/ticket/{id}/edit`) — one form, not two:
    - If ticket isn't edit-locked and user has `edit ticket fields`:
      title/description/priority/assignee are editable

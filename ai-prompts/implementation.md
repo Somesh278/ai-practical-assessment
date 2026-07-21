@@ -163,3 +163,45 @@ view access is uniform (no per-ticket visibility logic in Core scope),
 but if that ever changes, the hook and the access handler would need to
 be updated together by hand — worth a code comment flagging the
 dependency, not urgent enough to block on.
+
+## Prompt 5 — Seed data (Agent Mode)
+
+**Prompt:**
+"Write a Drush command that seeds 3-4 users with the ticket_staff role
+and 6-8 sample tickets across different statuses and priorities, with at
+least one unassigned ticket to exercise the unassigned-transition rule."
+
+**AI Response Summary:**
+Created database/seed-data/tickets.seed.php (4 staff users, 8 tickets
+spanning open/in_progress/resolved/closed, including one unassigned open
+ticket), TicketSeedService.php (loads seed data, creates users/tickets,
+walks valid status transitions rather than force-setting status directly
+for the normal path), a Drush command (ticket:seed / tms:seed), wired via
+ticket_management.services.yml, plus user.role.ticket_staff.yml install
+config (superseding/aligning with the earlier standalone role fix) and
+an update hook for existing sites. Idempotent by default (skips existing
+users/tickets); --force resets tickets to open via a direct DB write
+(since closed → open isn't a valid transition through the normal entity
+API) before reapplying seed values. Documented in
+database/setup-notes.md with run commands and seed user credentials.
+
+**Accepted:**
+The full implementation — the unassigned seed ticket was what actually
+surfaced Issues 5 and 6 in debugging-notes.md, so the seed data did its
+job as a real test fixture, not just filler data.
+
+**Changed:**
+None yet — flagged one thing to confirm with Cursor: that the --force
+direct-DB-write reset path is isolated to that one reset operation and
+documented as an intentional constraint bypass (not a pattern reused
+elsewhere), since it's exactly the kind of write the TicketEditLock/
+TicketStatusTransition constraints exist to prevent.
+
+**Rejected:**
+None.
+
+**Why:**
+Seed data doubling as the fixture that exposed two real access-control
+bugs (Issues 5 and 6) is a stronger outcome than seed data existing just
+to make the UI look populated — it was exercised against the actual
+access rules, not just displayed.

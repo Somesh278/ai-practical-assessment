@@ -2,9 +2,9 @@
 
 ## Summary
 
-- Total tests: 36
-- Assertions: 348
-- Passing: 36
+- Total tests: 37 (36 original + 1 added for Issue 5 regression, see
+  debugging-notes.md)
+- Passing: 37, confirmed after Issue 6's fix as well (no regressions)
 - Failing: 0
 
 ```
@@ -49,6 +49,7 @@ OK (36 tests, 348 assertions)
 | title/description/priority/assignee changed while resolved/closed/cancelled (12 combinations) | testEditLockRejectsDirectFieldChange | ✅ rejected, all 12 |
 | Priority specifically, while resolved | testEditLockRejectsPriorityChangeWhileResolved | ✅ rejected (targets the bug found via manual UI testing — see debugging-notes.md Issue 3) |
 | Status-only change while resolved (resolved → closed) | testEditLockAllowsStatusOnlyChangeWhileResolved | ✅ allowed, other fields unchanged |
+| Assignee status-field access uses stored (not live/in-memory) assignee | testAssigneeStatusFieldAccessUsesStoredAssignee | ✅ added after Issue 5 (debugging-notes.md) — regression guard |
 
 ## Known Test Suite Limitations
 
