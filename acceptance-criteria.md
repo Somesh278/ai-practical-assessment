@@ -40,6 +40,6 @@
 
 ## Beyond the original checklist (found and fixed during implementation)
 - [x] Field-level edit-lock actually enforced at save-time (not just entity-wide access) — closes a Drush/API bypass
-- [x] Assignee (not just admin) can transition their own assigned tickets — Issue 5 fix
-- [x] Edit link/tab actually visible to users with real update access — Issue 6 fix
+- [x] Assignee (not just admin) can transition their own assigned tickets — Issue 4 fix
+- [x] Edit link/tab actually visible to users with real update access — Issue 5 fix
 - [x] Unassigned tickets correctly restricted to admin-only transition — by design, confirmed via manual testing

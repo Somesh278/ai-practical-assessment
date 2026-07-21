@@ -1,0 +1,88 @@
+<?php
+
+/**
+ * @file
+ * Install and update hooks for the Ticket Management module.
+ */
+
+use Drupal\Component\Serialization\Yaml;
+
+/**
+ * Implements hook_install().
+ */
+function ticket_management_install(): void {
+  ticket_management_grant_administrator_ticket_permission();
+}
+
+/**
+ * Install comment configuration for tickets on existing sites.
+ */
+function ticket_management_update_10001(): void {
+  \Drupal::service('config.installer')->installDefaultConfig('module', 'ticket_management');
+}
+
+/**
+ * Install the ticket list view on existing sites.
+ */
+function ticket_management_update_10002(): void {
+  \Drupal::service('config.installer')->installDefaultConfig('module', 'ticket_management');
+}
+
+/**
+ * Install the ticket_staff role on existing sites.
+ */
+function ticket_management_update_10003(): void {
+  \Drupal::service('config.installer')->installDefaultConfig('module', 'ticket_management');
+}
+
+/**
+ * Grant administer tickets to the built-in Administrator role.
+ */
+function ticket_management_update_10004(): void {
+  \Drupal::service('config.installer')->installDefaultConfig('module', 'ticket_management');
+  ticket_management_grant_administrator_ticket_permission();
+}
+
+/**
+ * Adds an Edit link column to the ticket list view.
+ */
+function ticket_management_update_10005(): void {
+  $module_path = \Drupal::service('extension.list.module')->getPath('ticket_management');
+  $source = $module_path . '/config/install/views.view.ticket_list.yml';
+  $imported = Yaml::decode(file_get_contents($source));
+
+  $config = \Drupal::configFactory()->getEditable('views.view.ticket_list');
+  if ($config->isNew()) {
+    \Drupal::service('config.installer')->installDefaultConfig('module', 'ticket_management');
+    return;
+  }
+
+  $display = $config->get('display');
+  if (isset($display['default']['display_options']['fields']['edit_ticket'])) {
+    return;
+  }
+
+  $default_options = $imported['display']['default']['display_options'];
+  $display['default']['display_options']['fields']['edit_ticket'] = $default_options['fields']['edit_ticket'];
+  $display['default']['display_options']['style']['options']['columns']['edit_ticket'] = 'edit_ticket';
+  $display['default']['display_options']['style']['options']['info']['edit_ticket'] = $default_options['style']['options']['info']['edit_ticket'];
+  $config->set('display', $display)->save(TRUE);
+}
+
+/**
+ * Adds administer tickets to the built-in Administrator role configuration.
+ */
+function ticket_management_grant_administrator_ticket_permission(): void {
+  $config = \Drupal::configFactory()->getEditable('user.role.administrator');
+  if ($config->isNew()) {
+    return;
+  }
+
+  $permissions = $config->get('permissions') ?: [];
+  if (in_array('administer tickets', $permissions, TRUE)) {
+    return;
+  }
+
+  $permissions[] = 'administer tickets';
+  $config->set('permissions', $permissions)->save(TRUE);
+}

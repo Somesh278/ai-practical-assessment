@@ -1,0 +1,19 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - comment
+    - ticket_management
+id: ticket.comment
+field_name: comment
+entity_type: ticket
+type: comment
+settings:
+  comment_type: ticket_comment
+module: comment
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

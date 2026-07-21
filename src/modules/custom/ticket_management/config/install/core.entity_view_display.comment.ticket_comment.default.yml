@@ -1,0 +1,25 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - comment.type.ticket_comment
+    - field.field.comment.ticket_comment.comment_body
+  module:
+    - text
+id: comment.ticket_comment.default
+targetEntityType: comment
+bundle: ticket_comment
+mode: default
+content:
+  comment_body:
+    type: text_default
+    label: hidden
+    settings: {  }
+    third_party_settings: {  }
+    weight: 0
+    region: content
+  links:
+    weight: 100
+    region: content
+hidden:
+  subject: true

@@ -1,0 +1,6 @@
+services:
+  ticket_management.seed:
+    class: Drupal\ticket_management\TicketSeedService
+    arguments:
+      - '@entity_type.manager'
+      - '@database'

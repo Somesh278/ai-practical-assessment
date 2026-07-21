@@ -1,0 +1,41 @@
+entity.ticket.add_form:
+  path: '/ticket/add'
+  defaults:
+    _entity_form: 'ticket.add'
+    _title: 'Create ticket'
+  requirements:
+    _entity_create_access: ticket
+
+entity.ticket.canonical:
+  path: '/ticket/{ticket}'
+  defaults:
+    _entity_view: 'ticket.full'
+    _title_callback: '\Drupal\Core\Entity\Controller\EntityController::title'
+  requirements:
+    _entity_access: 'ticket.view'
+  options:
+    parameters:
+      ticket:
+        type: entity:ticket
+
+entity.ticket.edit_form:
+  path: '/ticket/{ticket}/edit'
+  defaults:
+    _entity_form: 'ticket.edit'
+    _title_callback: '\Drupal\Core\Entity\Controller\EntityController::editTitle'
+  requirements:
+    _entity_access: 'ticket.update'
+  options:
+    parameters:
+      ticket:
+        type: entity:ticket
+
+entity.ticket.collection:
+  path: '/tickets'
+  defaults:
+    _controller: '\Drupal\views\Routing\ViewPageController::handle'
+    _title_callback: '\Drupal\views\Routing\ViewPageController::getTitle'
+    view_id: ticket_list
+    display_id: page_1
+  requirements:
+    _permission: 'view tickets'

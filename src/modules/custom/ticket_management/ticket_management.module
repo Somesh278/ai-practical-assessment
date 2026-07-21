@@ -1,0 +1,22 @@
+<?php
+
+/**
+ * @file
+ * Primary module hooks for Ticket Management.
+ */
+
+use Drupal\Core\Database\Query\AlterableInterface;
+
+/**
+ * Implements hook_query_ticket_access_alter().
+ *
+ * Mirrors TicketAccessControlHandler view access so Views queries respect
+ * the same permission checks as entity access.
+ */
+function ticket_management_query_ticket_access_alter(AlterableInterface $query): void {
+  if (\Drupal::currentUser()->hasPermission('view tickets')) {
+    return;
+  }
+
+  $query->condition('ticket.id', 0);
+}

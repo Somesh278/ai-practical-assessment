@@ -3,25 +3,6 @@
 _Log real issues as they happen — don't backfill a too-clean history. The
 guide specifically looks for genuine debugging evidence._
 
-## Issue 1
-
-### Problem
-_TBD_
-
-### How I Investigated
-_TBD_
-
-### How AI Helped
-_TBD_
-
-### What I Validated
-_TBD — what you checked yourself rather than trusting AI's fix blindly_
-
-### Final Fix
-_TBD_
-
-<!-- Repeat ## Issue N for each real issue hit -->
-
 ## Issue 1 — TicketListBuilder date formatter injection
 
 ### Problem
@@ -48,38 +29,7 @@ throwing.
 Injected `date.formatter` service into `TicketListBuilder` correctly
 (constructor injection via `create()`), per Cursor's fix.
 
-<!-- Repeat ## Issue N for each real issue hit -->
-
-## Issue 2 — Wrong route-inspection command suggested (Claude, not Cursor)
-
-### Problem
-Ran `drush route:debug | grep entity.ticket` to verify the scaffolded
-routes registered correctly. Drush returned "There are no commands
-defined in the route namespace" — command didn't exist.
-
-### How I Investigated
-Confirmed `drush status` / version first to rule out a bootstrap problem
-(Drush 13, correctly installed). Then searched for the actual Drush 13
-route command naming.
-
-### How AI Helped
-Claude (outside Cursor, in the planning/chat assistant) had originally
-suggested `drush route:debug` — this was **Claude's mistake**, not
-Cursor's: it conflated Drush's route command with Drupal Console's
-`debug:router` naming convention. A web search surfaced the correct
-command (`drush route`, aka `core:route`, available since Drush 10.5).
-
-### What I Validated
-Confirmed via Drush's own documentation that `drush route` is the correct
-Drush 13 syntax; `route:debug` isn't and never was a real Drush command.
-
-### Final Fix
-Use `drush route | grep ticket` (or `drush route --name=...` /
-`--path=...`) instead.
-
-<!-- Repeat ## Issue N for each real issue hit -->
-
-## Issue 3 — priority field not locked on resolved tickets
+## Issue 2 — priority field not locked on resolved tickets
 
 ### Problem
 Manually testing the edit-lock via the actual UI (not just the smoke
@@ -118,9 +68,7 @@ description/assignee. Confirmed via the final code-review pass
 log entry was itself out of date (still said "Pending") until the final
 review caught the discrepancy and it was corrected here.
 
-<!-- Repeat ## Issue N for each real issue hit -->
-
-## Issue 4 — no role had "view tickets" / "administer tickets" granted
+## Issue 3 — no role had "view tickets" / "administer tickets" granted
 
 ### Problem
 After scaffolding, every route returned access denied for all users, and
@@ -165,7 +113,7 @@ Minimal install profile) get the permission via optional config instead
 of failing silently. hook_install() covers fresh installs;
 update_10003/10004 cover already-enabled sites.
 
-## Issue 5 — assignee cannot transition their own assigned ticket
+## Issue 4 — assignee cannot transition their own assigned ticket
 
 ### Problem
 Testing as a non-admin user, status transitions were blocked on ALL
@@ -212,19 +160,19 @@ access for the actual stored assignee. Added a dedicated Kernel test,
 `testAssigneeStatusFieldAccessUsesStoredAssignee`, to
 `TicketEntityTest.php` to pin this down and prevent regression.
 
-## Issue 6 — Edit link not visible for assignee-only users
+## Issue 5 — Edit link not visible for assignee-only users
 
 ### Problem
-After fixing Issue 5 (assignee status-transition access), the assignee
+After fixing Issue 4 (assignee status-transition access), the assignee
 still can't see an Edit button anywhere (ticket detail page, ticket
 list) — despite entity update access now correctly working for them
-per the Issue 5 fix. Suggests the Edit link's visibility is checked
+per the Issue 4 fix. Suggests the Edit link's visibility is checked
 separately from $entity->access('update'), possibly hardcoded to a
 specific permission (e.g. "edit ticket fields") rather than delegating
 to the real access handler logic.
 
 ### How I Investigated
-Confirmed via Issue 5's fix that checkAccess('update')-equivalent logic
+Confirmed via Issue 4's fix that checkAccess('update')-equivalent logic
 should now correctly grant access to the stored assignee. Isolated that
 the remaining problem is link *visibility*, not the underlying access
 grant — asked Cursor to identify where the Edit link is generated from
@@ -257,7 +205,7 @@ actual (correct) access rule.
 Confirmed the edit route's access requirement already delegates to the
 correct, already-fixed `checkAccess('update')` logic — so this is purely
 a missing-UI-element gap, not a second access bug layered on top of
-Issue 5.
+Issue 4.
 
 ### Final Fix
 Add `ticket_management.links.task.yml` (local task "Edit" tab on the
@@ -270,5 +218,39 @@ missing UI wiring.
 **Confirmed working:** manually tested as an assignee-only user — Edit
 tab appears on `/ticket/{id}` and the edit link appears in the ticket
 list's last column, both correctly gated on update access via the
-already-fixed logic from Issue 5. 37 Kernel tests still passing after
+already-fixed logic from Issue 4. 37 Kernel tests still passing after
 the change.
+
+## Issue 6 — closed/cancelled tickets incorrectly editable by general staff
+
+### Problem
+Found during the final code-review pass (code-review-notes.md, Round 2):
+`checkAccess('update')` granted update access via the `edit ticket
+fields` permission alone, without checking whether the ticket's status
+was transition-final. This meant general staff got update access — and
+saw the Edit tab/list link — on closed/cancelled tickets, contradicting
+the documented rule that those statuses should deny access entirely.
+
+### How I Investigated
+A code-review pass specifically scoped to re-check access logic against
+the specs, rather than a generic review — verified live against a seed
+ticket (ticket_staff user on a closed ticket → access('update') was
+ALLOWED, which shouldn't happen).
+
+### How AI Helped
+Traced the exact logic gap: `$can_edit_fields || $can_transition`
+returned true whenever the user held `edit ticket fields`, regardless of
+status. Confirmed this was the actual bug, not a duplication of access
+logic elsewhere.
+
+### What I Validated
+Confirmed after the fix that `edit ticket fields` no longer grants
+update access once status is `closed`/`cancelled`, while staff can still
+open `resolved` tickets to see disabled fields (the correct, narrower
+behavior).
+
+### Final Fix
+`checkAccess('update')` now denies access via `edit ticket fields` alone
+on transition-final statuses. Two new Kernel tests added:
+`testTransitionFinalTicketsDenyStaffUpdateAccess` (closed + cancelled)
+and `testResolvedTicketAllowsStaffUpdateAccessForDisabledFields`.

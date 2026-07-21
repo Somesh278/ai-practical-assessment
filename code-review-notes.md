@@ -39,7 +39,7 @@ None this round.
 ### AI-Assisted Review Summary
 Asked Cursor (Plan Mode) to specifically hunt for two known bug classes
 rather than do a generic review: (1) the live-entity-vs-stored-entity
-pattern that caused Issue 5, checked across every access/validation code
+pattern that caused Issue 4, checked across every access/validation code
 path; (2) any place duplicating TicketAccessControlHandler's logic
 instead of delegating to it, similar to the Views access-tag hook flagged
 earlier as an acceptable maintenance mirror. Also ran PHPCS
@@ -51,7 +51,7 @@ Findings:
 1. **No remaining Issue-5-class bugs** — TicketAccessControlHandler and
    both constraint validators all correctly use stored/original state.
    One minor UX-only gap noted: `TicketForm::disableEditLockedFields()`
-   used live status instead of stored, lower risk than Issue 5 since the
+   used live status instead of stored, lower risk than Issue 4 since the
    save-time constraint still blocks any actual invalid save regardless.
 2. **Genuine access-control bug (High):** `checkAccess('update')` granted
    update access via `edit ticket fields` permission alone, without
@@ -69,10 +69,10 @@ Findings:
    missing blocked-assignee validation (spec called for rejecting
    blocked users, not just nonexistent ones — implementation only
    checked existence); 2 trivial PHPCS style violations.
-5. **Doc drift, not code bugs:** debugging-notes.md's Issue 3 was still
+5. **Doc drift, not code bugs:** debugging-notes.md's Issue 2 was still
    marked "Pending" despite the fix having landed; api-contract.md had a
    few small inaccuracies (canonical-page description, missing the Edit
-   column added for Issue 6, an overly specific success-message example).
+   column added for Issue 5, an overly specific success-message example).
 
 ### My Review Observations
 The review's framing — hunting for a *specific known bug pattern* rather
@@ -105,7 +105,7 @@ All six findings addressed in one Cursor pass:
 - New `TicketAssignee` constraint rejects blocked (`status = 0`)
   assignees, not just nonexistent ones. New test:
   `testBlockedAssigneeRejected`.
-- `api-contract.md` and `debugging-notes.md` (Issue 3) corrected to
+- `api-contract.md` and `debugging-notes.md` (Issue 2) corrected to
   match actual behavior.
 
 Final verification: 46 Kernel tests, 426 assertions, all passing. PHPCS

@@ -1,0 +1,16 @@
+view tickets:
+  title: 'View tickets'
+  description: 'View ticket listings, details, and comments.'
+
+create tickets:
+  title: 'Create tickets'
+  description: 'Create new support tickets.'
+
+edit ticket fields:
+  title: 'Edit ticket fields'
+  description: 'Edit ticket title, description, priority, and assignee when not edit-locked.'
+
+administer tickets:
+  title: 'Administer tickets'
+  description: 'Transition status on any ticket, including unassigned tickets.'
+  restrict access: true

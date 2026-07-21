@@ -1,0 +1,10 @@
+name: Ticket Management
+type: module
+description: 'Support ticket management system.'
+core_version_requirement: ^10
+package: Custom
+dependencies:
+  - drupal:comment
+  - drupal:options
+  - drupal:user
+  - drupal:views

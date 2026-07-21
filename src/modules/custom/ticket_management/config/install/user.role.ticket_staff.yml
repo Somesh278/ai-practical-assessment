@@ -1,0 +1,13 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - ticket_management
+id: ticket_staff
+label: 'Ticket staff'
+weight: 3
+is_admin: false
+permissions:
+  - 'create tickets'
+  - 'edit ticket fields'
+  - 'view tickets'

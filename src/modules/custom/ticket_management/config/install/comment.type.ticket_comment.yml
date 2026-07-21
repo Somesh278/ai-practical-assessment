@@ -1,0 +1,10 @@
+langcode: en
+status: true
+dependencies:
+  enforced:
+    module:
+      - ticket_management
+id: ticket_comment
+label: 'Ticket comment'
+target_entity_type_id: ticket
+description: 'Comments on support tickets.'

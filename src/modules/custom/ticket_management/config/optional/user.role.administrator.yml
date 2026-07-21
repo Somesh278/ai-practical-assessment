@@ -1,0 +1,12 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - ticket_management
+    - user
+id: administrator
+label: Administrator
+weight: 3
+is_admin: true
+permissions:
+  - 'administer tickets'
