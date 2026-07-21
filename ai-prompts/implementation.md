@@ -117,3 +117,49 @@ correct behavior on the first pass — no bugs found this round, unlike the
 prior three implementation rounds. Comment access relying on Comment
 module defaults (rather than a custom handler, per the earlier design
 review's suggestion to simplify) held up correctly under real testing.
+
+## Prompt 4 — Ticket list View, replacing list builder (Agent Mode)
+
+**Prompt:**
+"@api-contract.md @data-model.md — Create a Views config for the /tickets
+route: title/status/priority/assignee/updated columns, exposed keyword
+filter (title OR description, CONTAINS), exposed status filter (optional,
+exact match), default sort updated-desc, empty state message, must use
+entity access checking so it respects TicketAccessControlHandler.
+TicketListBuilder.php currently serves this route — replace it entirely
+and update routing.yml to point at the View."
+
+**AI Response Summary:**
+Repointed entity.ticket.collection in routing.yml to Views'
+ViewPageController (view_id: ticket_list, display_id: page_1). Removed
+the list_builder handler from the Ticket entity annotation and deleted
+TicketListBuilder.php entirely — no orphaned code left referencing it.
+Removed a redundant route_name from the view's page display so routing
+is owned by routing.yml, not duplicated in two places. Verified
+entity.ticket.collection resolves correctly and all 36 Kernel tests
+still pass after the routing change.
+
+**Accepted:** Full implementation, after reviewing the actual YAML.
+Access: `disable_sql_rewrite: false` triggers Drupal's standard
+EntityViewsData query-tag mechanism (`ticket_access`), handled by
+`ticket_management_query_ticket_access_alter()` — legitimate, not a
+workaround; matches how Views entity-access integration works generically
+for custom entities. Keyword filter correctly OR's title and description
+via a shared exposed identifier in filter group 1; status filter is
+optional (`value: {}`) in group 2, AND'd with the keyword group. Empty
+state configured via `area_text_custom`, `empty_table: false` ensures it
+actually renders instead of a blank table.
+
+**Changed:** None — accepted as generated.
+
+**Rejected:** None.
+
+**Why:** Verified rather than assumed correct, given accessCheck was
+flagged as the highest-risk item in the earlier design review. One
+maintenance note (not a fix): the access-tag hook manually reimplements
+the "view tickets = see all" rule rather than calling
+TicketAccessControlHandler::checkAccess() per row. Correct today because
+view access is uniform (no per-ticket visibility logic in Core scope),
+but if that ever changes, the hook and the access handler would need to
+be updated together by hand — worth a code comment flagging the
+dependency, not urgent enough to block on.

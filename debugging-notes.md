@@ -111,3 +111,48 @@ broader failure of the edit-lock mechanism.
 _Pending — flagged to Cursor, not yet fixed as of this log entry._
 
 <!-- Repeat ## Issue N for each real issue hit -->
+
+## Issue 4 — no role had "view tickets" / "administer tickets" granted
+
+### Problem
+After scaffolding, every route returned access denied for all users, and
+separately, no user could transition an unassigned ticket. Permissions
+(`view tickets`, `create tickets`, `edit ticket fields`,
+`administer tickets`) were defined in ticket_management.permissions.yml,
+but defining a permission doesn't create or grant it to any role —
+nothing was actually holding these permissions.
+
+### How I Investigated
+`drush role:list` to check whether ticket_staff existed at all (it
+didn't). `drush role:list --filter=perm="administer tickets"` to check
+whether any role held the admin permission (none did). Checked whether
+seeded/test tickets had an assignee set, since an unassigned ticket can
+only be transitioned by administer tickets per data-model.md's access
+rule — confirmed this was compounding the problem, not the root cause by
+itself.
+
+### How AI Helped
+Confirmed the fix approach: install-time config for the ticket_staff role
+(same pattern already used for the Comment module config), and granting
+"administer tickets" to Drupal's built-in Administrator role rather than
+creating a separate custom admin role — simpler, avoids duplicating
+Drupal's existing admin concept for a Core-scope tool.
+
+### What I Validated
+Ran drush role:list --filter=perm="administer tickets" after the fix to
+confirm Administrator now holds it; checked ticket_staff exists with the
+three non-admin permissions granted.
+
+### Final Fix
+Added user.role.ticket_staff.yml as install config (view tickets, create
+tickets, edit ticket fields) and granted administer tickets to the
+built-in Administrator role, both via install config with an update hook
+for already-enabled sites — same pattern as the earlier Comment module
+config, so a fresh clone works without a manual drush role:create step.
+
+**Confirmed working:** ticket_staff holds create/edit/view; Administrator
+holds administer tickets. Implementation also covered a case not
+explicitly asked for — sites without a standard Administrator role (e.g.
+Minimal install profile) get the permission via optional config instead
+of failing silently. hook_install() covers fresh installs;
+update_10003/10004 cover already-enabled sites.
