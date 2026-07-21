@@ -81,3 +81,39 @@ a locked ticket's first page load._
 **Rejected:** _None yet._
 
 **Why:** _TBD after form-render check._
+
+## Prompt 3 — Comment module integration (Agent Mode)
+
+**Prompt:**
+"Wire up the Comment module for tickets per data-model.md: create a
+comment_type 'ticket_comment' targeting the ticket entity type, add a
+comment field to the ticket bundle in field mode 'open', provisioned via
+install config (not addDefaultCommentField()). No custom comment access
+handler — rely on Comment module's default gating."
+
+**AI Response Summary:**
+Added drupal:comment dependency to .info.yml. Created install config:
+comment.type.ticket_comment.yml, field.storage.ticket.comment.yml,
+field.field.ticket.ticket.comment.yml (status: 2/open),
+field.field.comment.ticket_comment.comment_body.yml, plus view/form
+display config for both the ticket (comment formatter) and the comment
+bundle itself (subject hidden, comment_body only). Added an update hook
+(ticket_management_update_10001()) to import the config on already-
+enabled sites, not just fresh installs. No custom access handler, as
+requested. Kernel tests confirmed still passing (36/36) after the change.
+
+**Accepted:** Full implementation as generated. Manually verified: comment
+posts successfully on an open ticket; comment posts successfully on a
+closed/cancelled ticket (confirms comments are correctly exempt from the
+edit-lock constraint, per the requirements-analysis.md decision); subject
+field genuinely hidden in the rendered UI, not just in display config.
+
+**Changed:** None needed.
+
+**Rejected:** None.
+
+**Why:** Config-based install approach + manual verification confirmed
+correct behavior on the first pass — no bugs found this round, unlike the
+prior three implementation rounds. Comment access relying on Comment
+module defaults (rather than a custom handler, per the earlier design
+review's suggestion to simplify) held up correctly under real testing.
